@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game WebApp v2.0</title>
+
+  <!-- Supabase JS Client (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --accent-color: #38bdf8;
+      --accent-hover: #0284c7;
+      --border-color: #334155;
+      --danger-color: #ef4444;
+      --success-color: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    h1, h2, h3 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--accent-color);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: #0f172a;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--accent-color);
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      background-color: var(--accent-color);
+      color: #0f172a;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      margin-top: 8px;
+    }
+
+    button:hover {
+      background-color: var(--accent-hover);
+      color: #fff;
+    }
+
+    button.secondary {
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+    }
+
+    button.secondary:hover {
+      background-color: var(--border-color);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Auth Screens */
+    .auth-toggle {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .auth-toggle span {
+      color: var(--accent-color);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* Dashboard & Header */
+    .user-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    .admin-badge {
+      color: #f59e0b;
+      font-size: 1.1rem;
+      margin-left: 4px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px;
+      font-size: 0.9rem;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      color: #94a3b8;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-color);
+      color: #0f172a;
+      font-weight: bold;
+    }
+
+    /* Friends List */
+    .friend-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: #0f172a;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .status-dot {
+      height: 10px;
+      width: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .status-online { background-color: var(--success-color); }
+    .status-offline { background-color: #64748b; }
+
+    /* Canvas / Game Container */
+    #gameContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    canvas {
+      background: #000;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .game-status {
+      text-align: center;
+      margin-bottom: 12px;
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+
+    .notification {
+      background: #0284c7;
+      color: white;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- LOGIN / REGISTER SCREEN -->
+    <div id="authScreen">
+      <h1 id="authTitle">Anmelden</h1>
+      <form id="authForm">
+        <div class="form-group">
+          <label>E-Mail</label>
+          <input type="email" id="authEmail" required />
+        </div>
+        <div class="form-group">
+          <label>Passwort</label>
+          <input type="password" id="authPassword" required />
+        </div>
+        <button type="submit" id="authSubmitBtn">Einloggen</button>
+      </form>
+      <div class="auth-toggle">
+        <span id="toggleAuthMode">Noch keinen Account? Registrieren</span>
+      </div>
+    </div>
+
+    <!-- SET USERNAME SCREEN -->
+    <div id="usernameScreen" class="hidden">
+      <h2>Username wählen</h2>
+      <div class="form-group">
+        <label>Dein eindeutiger Spielename</label>
+        <input type="text" id="usernameInput" placeholder="z.B. Player1" />
+      </div>
+      <button id="saveUsernameBtn">Speichern & Weiter</button>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboardScreen" class="hidden">
+      <div class="user-header">
+        <div>
+          <strong id="displayUsername">-</strong>
+          <span id="displayAdminBadge" class="admin-badge hidden" title="Admin">👑</span>
+        </div>
+        <button id="logoutBtn" class="secondary" style="width: auto; padding: 6px 12px; margin: 0;">Logout</button>
+      </div>
+
+      <!-- Live Challenge Banner -->
+      <div id="challengeBanner" class="notification hidden">
+        <span id="challengeText">Herausforderung erhalten!</span>
+        <div style="display: flex; gap: 8px;">
+          <button id="acceptChallengeBtn" style="padding: 6px 10px; margin:0;">Ja</button>
+          <button id="declineChallengeBtn" class="secondary" style="padding: 6px 10px; margin:0;">Nein</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" id="btnTabFriends">Freunde</button>
+        <button class="tab-btn" id="btnTabGame">Spiel</button>
+      </div>
+
+      <!-- TAB 1: FREUNDE -->
+      <div id="friendsTab">
+        <div class="form-group">
+          <label>Freund hinzufügen (Username)</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="addFriendInput" placeholder="Username eingeben" />
+            <button id="sendFriendReqBtn" style="width: auto; margin:0;">Anfragen</button>
+          </div>
+        </div>
+
+        <h3>Deine Freunde</h3>
+        <div id="friendsList">
+          <p style="text-align: center; color: #64748b;">Lade Freunde...</p>
+        </div>
+      </div>
+
+      <!-- TAB 2: SPIEL (v1.3 Engine) -->
+      <div id="gameTab" class="hidden">
+        <div class="game-status" id="gameInfo">Kein aktives Match. Wähle einen Freund aus!</div>
+        
+        <div id="gameContainer">
+          <canvas id="gameCanvas" width="500" height="400"></canvas>
+        </div>
+
+        <button id="leaveGameBtn" class="secondary hidden" style="margin-top: 16px;">Spiel verlassen</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // -------------------------------------------------------------
+    // SUPABASE SETUP
+    // -------------------------------------------------------------
+    const SUPABASE_URL = "https://ynwboxenxfojpdwgygve.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_qAijDDwqbVGkB6I2WeAing_-RUCMESd";
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // App State
+    let currentUser = null;
+    let currentProfile = null;
+    let isRegisterMode = false;
+    let activeMatch = null;
+
+    // DOM-Elemente
+    const authScreen = document.getElementById('authScreen');
+    const usernameScreen = document.getElementById('usernameScreen');
+    const dashboardScreen = document.getElementById('dashboardScreen');
+    const authForm = document.getElementById('authForm');
+    const authTitle = document.getElementById('authTitle');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const toggleAuthMode = document.getElementById('toggleAuthMode');
+
+    // -------------------------------------------------------------
+    // AUTHENTIFIZIERUNG & MODUS-SWITCH
+    // -------------------------------------------------------------
+    toggleAuthMode.addEventListener('click', () => {
+      isRegisterMode = !isRegisterMode;
+      authTitle.innerText = isRegisterMode ? 'Registrieren' : 'Anmelden';
+      authSubmitBtn.innerText = isRegisterMode ? 'Account Erstellen' : 'Einloggen';
+      toggleAuthMode.innerText = isRegisterMode ? 'Schon einen Account? Anmelden' : 'Noch keinen Account? Registrieren';
+    });
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+
+      if (isRegisterMode) {
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) return alert("Fehler bei Registrierung: " + error.message);
+        alert("Account erstellt! Du kannst dich jetzt einloggen.");
+        isRegisterMode = false;
+        authTitle.innerText = 'Anmelden';
+        authSubmitBtn.innerText = 'Einloggen';
+        toggleAuthMode.innerText = 'Noch keinen Account? Registrieren';
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return alert("Login fehlgeschlagen: " + error.message);
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      if (currentProfile) {
+        await supabase.from('profiles').update({ status: 'offline' }).eq('id', currentProfile.id);
+      }
+      await supabase.auth.signOut();
+      location.reload();
+    });
+
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        currentUser = session.user;
+        authScreen.classList.add('hidden');
+        await loadUserProfile();
+      } else {
+        authScreen.classList.remove('hidden');
+        dashboardScreen.classList.add('hidden');
+      }
+    });
+
+    async function loadUserProfile() {
+      let { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (!profile) {
+        const { data: newProfile } = await supabase.from('profiles').insert([
+          { id: currentUser.id, status: 'online' }
+        ]).select().single();
+        profile = newProfile;
+      }
+
+      currentProfile = profile;
+
+      if (!profile.username) {
+        usernameScreen.classList.remove('hidden');
+        return;
+      }
+
+      await supabase.from('profiles').update({ status: 'online' }).eq('id', profile.id);
+
+      document.getElementById('displayUsername').innerText = profile.username;
+      if (profile.is_admin) {
+        document.getElementById('displayAdminBadge').classList.remove('hidden');
+      }
+
+      usernameScreen.classList.add('hidden');
+      dashboardScreen.classList.remove('hidden');
+
+      loadFriends();
+      listenForChallenges();
+      initGameEngine();
+    }
+
+    document.getElementById('saveUsernameBtn').addEventListener('click', async () => {
+      const username = document.getElementById('usernameInput').value.trim();
+      if (!username) return alert("Bitte einen gültigen Namen eingeben!");
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username: username })
+        .eq('id', currentUser.id);
+
+      if (error) return alert("Name eventuell vergeben.");
+      loadUserProfile();
+    });
+
+    // -------------------------------------------------------------
+    // FREUNDE SYSTEM
+    // -------------------------------------------------------------
+    document.getElementById('sendFriendReqBtn').addEventListener('click', async () => {
+      const targetName = document.getElementById('addFriendInput').value.trim();
+      if (!targetName) return;
+
+      const { data: targetUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', targetName)
+        .single();
+
+      if (!targetUser) return alert("Benutzer nicht gefunden!");
+      if (targetUser.id === currentProfile.id) return alert("Du kannst dich nicht selbst hinzufügen.");
+
+      await supabase.from('friends').insert([
+        { user_id: currentProfile.id, friend_id: targetUser.id, status: 'pending' }
+      ]);
+
+      alert("Freundschaftsanfrage gesendet!");
+      document.getElementById('addFriendInput').value = '';
+    });
+
+    async function loadFriends() {
+      const { data: sent } = await supabase.from('friends').select('friend_id').eq('user_id', currentProfile.id);
+      const { data: received } = await supabase.from('friends').select('user_id').eq('friend_id', currentProfile.id);
+
+      const friendIds = [
+        ...(sent || []).map(f => f.friend_id),
+        ...(received || []).map(f => f.user_id)
+      ];
+
+      if (friendIds.length === 0) {
+        document.getElementById('friendsList').innerHTML = '<p style="text-align: center; color: #64748b;">Noch keine Freunde.</p>';
+        return;
+      }
+
+      const { data: profiles } = await supabase.from('profiles').select('*').in('id', friendIds);
+
+      const listHtml = profiles.map(p => `
+        <div class="friend-item">
+          <div>
+            <span class="status-dot ${p.status === 'online' ? 'status-online' : 'status-offline'}"></span>
+            <strong>${p.username}</strong> ${p.is_admin ? '👑' : ''}
+          </div>
+          ${p.status === 'online' ? `<button onclick="challengePlayer('${p.id}')" style="width:auto; padding: 4px 8px; font-size: 0.8rem;">Herausfordern</button>` : ''}
+        </div>
+      `).join('');
+
+      document.getElementById('friendsList').innerHTML = listHtml;
+    }
+
+    // -------------------------------------------------------------
+    // MATCHMAKING & HERAUSFORDERUNGEN
+    // -------------------------------------------------------------
+    async function challengePlayer(targetId) {
+      const { data: match, error } = await supabase.from('matches').insert([
+        {
+          player_1: currentProfile.id,
+          player_2: targetId,
+          status: 'pending',
+          current_turn: currentProfile.id,
+          game_state: { p1Y: 160, p2Y: 160, ballX: 250, ballY: 200, ballVX: 4, ballVY: 3, score1: 0, score2: 0 }
+        }
+      ]).select().single();
+
+      if (error) return alert("Fehler beim Erstellen des Matches.");
+
+      alert("Herausforderung gesendet!");
+      subscribeToMatch(match.id);
+    }
+
+    function listenForChallenges() {
+      supabase
+        .channel('public:matches')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matches' }, payload => {
+          const newMatch = payload.new;
+          if (newMatch.player_2 === currentProfile.id && newMatch.status === 'pending') {
+            showChallengeBanner(newMatch);
+          }
+        })
+        .subscribe();
+    }
+
+    function showChallengeBanner(match) {
+      const banner = document.getElementById('challengeBanner');
+      banner.classList.remove('hidden');
+
+      document.getElementById('acceptChallengeBtn').onclick = async () => {
+        await supabase.from('matches').update({ status: 'active' }).eq('id', match.id);
+        banner.classList.add('hidden');
+        switchTab('gameTab');
+        subscribeToMatch(match.id);
+      };
+
+      document.getElementById('declineChallengeBtn').onclick = async () => {
+        await supabase.from('matches').update({ status: 'declined' }).eq('id', match.id);
+        banner.classList.add('hidden');
+      };
+    }
+
+    // -------------------------------------------------------------
+    // FULL GAME ENGINE (v1.3 Sync via Supabase)
+    // -------------------------------------------------------------
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let localPaddleY = 160;
+    const paddleHeight = 80;
+    const paddleWidth = 10;
+
+    function initGameEngine() {
+      document.addEventListener('keydown', (e) => {
+        if (!activeMatch || activeMatch.status !== 'active') return;
+        
+        if (e.key === 'ArrowUp') {
+          localPaddleY = Math.max(0, localPaddleY - 15);
+          syncPaddlePosition();
+        } else if (e.key === 'ArrowDown') {
+          localPaddleY = Math.min(canvas.height - paddleHeight, localPaddleY + 15);
+          syncPaddlePosition();
+        }
+      });
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    async function syncPaddlePosition() {
+      if (!activeMatch) return;
+      const state = activeMatch.game_state || {};
+      
+      if (activeMatch.player_1 === currentProfile.id) {
+        state.p1Y = localPaddleY;
+      } else {
+        state.p2Y = localPaddleY;
+      }
+
+      await supabase.from('matches').update({ game_state: state }).eq('id', activeMatch.id);
+    }
+
+    function subscribeToMatch(matchId) {
+      supabase
+        .channel(`match:${matchId}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'matches', filter: `id=eq.${matchId}` }, payload => {
+          activeMatch = payload.new;
+        })
+        .subscribe(async () => {
+          const { data } = await supabase.from('matches').select('*').eq('id', matchId).single();
+          activeMatch = data;
+        });
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (activeMatch && activeMatch.status === 'active') {
+        const state = activeMatch.game_state || {};
+
+        // Ball zeichnen
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(state.ballX || 250, state.ballY || 200, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Paddles zeichnen
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(10, state.p1Y || 160, paddleWidth, paddleHeight);
+        ctx.fillRect(canvas.width - 20, state.p2Y || 160, paddleWidth, paddleHeight);
+
+        // Host berechnet Ball-Physik
+        if (activeMatch.player_1 === currentProfile.id) {
+          updateBallPhysics(state);
+        }
+      } else {
+        ctx.fillStyle = '#64748b';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText("Warte auf aktives Spiel...", canvas.width / 2, canvas.height / 2);
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    async function updateBallPhysics(state) {
+      let bx = state.ballX || 250;
+      let by = state.ballY || 200;
+      let vx = state.ballVX || 4;
+      let vy = state.ballVY || 3;
+
+      bx += vx;
+      by += vy;
+
+      if (by <= 0 || by >= canvas.height) vy *= -1;
+
+      // Kollision Links
+      if (bx <= 20 && by >= (state.p1Y || 160) && by <= (state.p1Y || 160) + paddleHeight) {
+        vx *= -1;
+      }
+
+      // Kollision Rechts
+      if (bx >= canvas.width - 20 && by >= (state.p2Y || 160) && by <= (state.p2Y || 160) + paddleHeight) {
+        vx *= -1;
+      }
+
+      // Reset bei Punkt
+      if (bx < 0 || bx > canvas.width) {
+        bx = 250;
+        by = 200;
+      }
+
+      state.ballX = bx;
+      state.ballY = by;
+      state.ballVX = vx;
+      state.ballVY = vy;
+
+      await supabase.from('matches').update({ game_state: state }).eq('id', activeMatch.id);
+    }
+
+    // -------------------------------------------------------------
+    // TAB NAVIGATION
+    // -------------------------------------------------------------
+    document.getElementById('btnTabFriends').addEventListener('click', (e) => switchTab('friendsTab', e.target));
+    document.getElementById('btnTabGame').addEventListener('click', (e) => switchTab('gameTab', e.target));
+
+    function switchTab(tabId, targetBtn) {
+      document.getElementById('friendsTab').classList.add('hidden');
+      document.getElementById('gameTab').classList.add('hidden');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById(tabId).classList.remove('hidden');
+      if (targetBtn) targetBtn.classList.add('active');
+    }
+  </script>
+</body>
+</html>
