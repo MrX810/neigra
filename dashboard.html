@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neigra Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #121318;
+            color: #f0f4f8;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 32px 24px;
+            background: #1a1c26;
+            border-radius: 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            margin: 16px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #29b6f6, #ff5252);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .version {
+            font-size: 0.7rem;
+            color: #4a4f62;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .profile-card {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            margin-bottom: 24px;
+        }
+
+        .profile-card .name {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .profile-card .username {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .profile-card .email {
+            font-size: 0.8rem;
+            color: #4a4f62;
+            margin-top: 2px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: #29b6f6;
+            color: #032030;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.97);
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-danger {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: #ff5252;
+            border: 1px solid rgba(255, 82, 82, 0.2);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-danger:active {
+            background: rgba(255, 82, 82, 0.05);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #4a4f62;
+            font-size: 0.8rem;
+            margin: 12px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1c26;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: #f0f4f8;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 100;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .toast.show {
+            display: block;
+            animation: toastIn 0.3s ease;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .toast.success {
+            border-color: #66bb6a;
+        }
+        .toast.error {
+            border-color: #ff5252;
+        }
+        .toast.info {
+            border-color: #29b6f6;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 0;
+                margin: 0;
+                padding: 20px;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+        }
+
+        @media (min-width: 600px) {
+            .container {
+                max-width: 460px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Neigra</h1>
+            <span class="version">v2.2.1</span>
+        </div>
+
+        <div class="profile-card">
+            <div class="name" id="dash-name">Spieler</div>
+            <div class="username" id="dash-username">@benutzername</div>
+            <div class="email" id="dash-email">email@email.de</div>
+        </div>
+
+        <button class="btn-primary" id="start-game-btn">🎮 Spiel starten</button>
+
+        <div class="divider">⚙️</div>
+
+        <button class="btn-secondary" id="friends-btn">👥 Freunde (kommt später)</button>
+        <button class="btn-danger" id="logout-btn">🚪 Abmelden</button>
+    </div>
+
+    <script>
+        // ================================================================
+        // 1. LOCAL STORAGE
+        // ================================================================
+
+        function getCurrentUser() {
+            try {
+                return JSON.parse(localStorage.getItem('neigra_current_user'));
+            } catch {
+                return null;
+            }
+        }
+
+        function clearCurrentUser() {
+            localStorage.removeItem('neigra_current_user');
+        }
+
+        function showToast(msg, type = 'info') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast show ' + type;
+            clearTimeout(el._hideTimer);
+            el._hideTimer = setTimeout(() => {
+                el.classList.remove('show');
+            }, 4000);
+        }
+
+        // ================================================================
+        // 2. DASHBOARD
+        // ================================================================
+
+        function loadDashboard() {
+            const user = getCurrentUser();
+
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('dash-name').textContent = user.display_name || user.username;
+            document.getElementById('dash-username').textContent = '@' + user.username;
+            document.getElementById('dash-email').textContent = user.email || '';
+
+            console.log('✅ Dashboard geladen für:', user.username);
+        }
+
+        // ================================================================
+        // 3. FUNKTIONEN (NUR DAS NÖTIGSTE)
+        // ================================================================
+
+        function startGame() {
+            window.location.href = 'game.html';
+        }
+
+        function logout() {
+            clearCurrentUser();
+            showToast('Abgemeldet. Bis bald!', 'info');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 500);
+        }
+
+        function showFriendsPlaceholder() {
+            showToast('👥 Freundesystem kommt in Phase 2.5!', 'info');
+        }
+
+        // ================================================================
+        // 4. EVENT BINDING (NUR HIER WERDEN BUTTONS VERBUNDEN)
+        // ================================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Dashboard laden
+            loadDashboard();
+
+            // 2. Buttons mit Event-Listenern verbinden (NICHT mit onclick im HTML!)
+            document.getElementById('start-game-btn').addEventListener('click', startGame);
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            document.getElementById('friends-btn').addEventListener('click', showFriendsPlaceholder);
+
+            console.log('✅ Dashboard-Buttons gebunden');
+        });
+
+        // ================================================================
+        // 5. FALLBACK: Falls der DOMContentLoaded nicht feuert
+        // ================================================================
+
+        // Sicherheitshalber: Wenn das Script läuft, aber der Event nicht gefeuert hat
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            // Schon geladen → manuell ausführen
+            const user = getCurrentUser();
+            if (user) {
+                document.getElementById('dash-name').textContent = user.display_name || user.username;
+                document.getElementById('dash-username').textContent = '@' + user.username;
+                document.getElementById('dash-email').textContent = user.email || '';
+            }
+
+            document.getElementById('start-game-btn').addEventListener('click', startGame);
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            document.getElementById('friends-btn').addEventListener('click', showFriendsPlaceholder);
+        }
+
+        console.log('🚀 Neigra v2.2.1 – Dashboard (NUR funktionierende Buttons)');
+    </script>
+
+</body>
+</html>
