@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neigra Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #121318;
+            color: #f0f4f8;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 780px;
+            padding: 24px;
+            background: #1a1c26;
+            border-radius: 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            margin: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .container::-webkit-scrollbar-thumb {
+            background: #2a2d3a;
+            border-radius: 4px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #29b6f6, #ff5252);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .version {
+            font-size: 0.7rem;
+            color: #4a4f62;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .profile-card {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            margin-bottom: 16px;
+        }
+
+        .profile-color-dot {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+            background: #29b6f6;
+        }
+
+        .profile-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .profile-info .name {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .profile-info .username {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin: 8px 0 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title .count {
+            font-size: 0.7rem;
+            color: #4a4f62;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+        }
+
+        .friend-item .dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .friend-item .name {
+            flex: 1;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .friend-item .status {
+            font-size: 0.65rem;
+        }
+
+        .friend-item .status.online {
+            color: #66bb6a;
+        }
+        .friend-item .status.offline {
+            color: #4a4f62;
+        }
+
+        .friend-item .action-btn {
+            background: #29b6f6;
+            color: #032030;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .friend-item .action-btn.accept {
+            background: #66bb6a;
+        }
+        .friend-item .action-btn.decline {
+            background: #ff5252;
+            color: #fff;
+        }
+        .friend-item .action-btn.challenge {
+            background: #ffd54f;
+            color: #121318;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .search-row input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .search-row input:focus {
+            border-color: #29b6f6;
+        }
+
+        .search-row .btn-search {
+            padding: 10px 16px;
+            background: #29b6f6;
+            color: #032030;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .search-row .btn-search:active {
+            transform: scale(0.97);
+        }
+
+        .search-results {
+            max-height: 150px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .search-results::-webkit-scrollbar {
+            width: 3px;
+        }
+        .search-results::-webkit-scrollbar-thumb {
+            background: #2a2d3a;
+            border-radius: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #4a4f62;
+            font-size: 0.85rem;
+            padding: 12px 0;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .actions-grid .btn-dash {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 14px 10px;
+            color: #f0f4f8;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .actions-grid .btn-dash:active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(0.97);
+        }
+
+        .actions-grid .btn-dash .icon {
+            font-size: 1.4rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .actions-grid .btn-dash.primary {
+            background: #29b6f6;
+            color: #032030;
+            border-color: #29b6f6;
+        }
+
+        .actions-grid .btn-dash.danger {
+            border-color: rgba(255, 82, 82, 0.2);
+            color: #ff5252;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1c26;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: #f0f4f8;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 100;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .toast.show {
+            display: block;
+            animation: toastIn 0.3s ease;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .toast.success {
+            border-color: #66bb6a;
+        }
+        .toast.error {
+            border-color: #ff5252;
+        }
+        .toast.info {
+            border-color: #29b6f6;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(18, 19, 24, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #29b6f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 0;
+                max-height: none;
+                margin: 0;
+                padding: 20px;
+                height: 100vh;
+            }
+        }
+
+        @media (min-width: 600px) {
+            .container {
+                max-width: 460px;
+                max-height: 820px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast"></div>
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Neigra</h1>
+            <span class="version">v2.3</span>
+        </div>
+
+        <!-- Profile -->
+        <div class="profile-card">
+            <div class="profile-color-dot" id="dash-color-dot"></div>
+            <div class="profile-info">
+                <div class="name" id="dash-name">Spieler</div>
+                <div class="username" id="dash-username">@benutzername</div>
+            </div>
+        </div>
+
+        <!-- Suche -->
+        <div class="search-row">
+            <input type="text" id="friend-search" placeholder="Benutzername suchen...">
+            <button class="btn-search" id="search-btn">Suchen</button>
+        </div>
+        <div id="search-results" class="search-results"></div>
+
+        <!-- Freunde -->
+        <div class="section-title">
+            <span>👥 Freunde</span>
+            <span class="count" id="friend-count">0</span>
+        </div>
+        <div id="friend-list">
+            <div class="empty-state">Lade Freunde...</div>
+        </div>
+
+        <!-- Anfragen -->
+        <div class="section-title" style="margin-top: 8px;">
+            <span>📩 Anfragen</span>
+            <span class="count" id="request-count">0</span>
+        </div>
+        <div id="request-list">
+            <div class="empty-state">Keine ausstehenden Anfragen</div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions-grid">
+            <div class="btn-dash primary" id="start-game-btn">
+                <span class="icon">🎮</span>
+                Spiel starten
+            </div>
+            <div class="btn-dash danger" id="logout-btn">
+                <span class="icon">🚪</span>
+                Abmelden
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // 1. SUPABASE CLIENT
+        // ================================================================
+        const SUPABASE_URL = 'https://ynwboxenxfojpdwgygve.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlud2JveGVueGZvanBkd2d5Z3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1MzkyODEsImV4cCI6MjEwMjExNTI4MX0.L9JnFpu-HrVQW_tzfSqeidbOBEFDPQWWJ7h19-c-C70';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ================================================================
+        // 2. LOCAL STORAGE
+        // ================================================================
+
+        function getCurrentUser() {
+            try { return JSON.parse(localStorage.getItem('neigra_current_user')); } catch { return null; }
+        }
+
+        function clearCurrentUser() {
+            localStorage.removeItem('neigra_current_user');
+        }
+
+        // ================================================================
+        // 3. UI HELPERS
+        // ================================================================
+
+        function showToast(msg, type = 'info') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'toast show ' + type;
+            clearTimeout(el._hideTimer);
+            el._hideTimer = setTimeout(() => { el.classList.remove('show'); }, 4000);
+        }
+
+        function setLoading(active) {
+            document.getElementById('loading').classList.toggle('active', active);
+        }
+
+        // ================================================================
+        // 4. STATE
+        // ================================================================
+
+        let currentUser = null;
+        let currentProfile = null;
+        let presenceChannel = null;
+        let onlineUsers = {};
+
+        // ================================================================
+        // 5. PROFILE & ONLINE-STATUS
+        // ================================================================
+
+        async function loadProfile() {
+            if (!currentUser) return;
+
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('username', currentUser.username)
+                .maybeSingle();
+
+            if (error) {
+                console.error('Profil laden fehlgeschlagen:', error);
+                return;
+            }
+
+            if (!data) {
+                // User existiert noch nicht in Supabase → anlegen
+                const { data: newUser, error: insertError } = await supabase
+                    .from('profiles')
+                    .insert([{
+                        username: currentUser.username,
+                        email: currentUser.email,
+                        display_name: currentUser.display_name || currentUser.username,
+                        preferred_color: currentUser.preferred_color || '#29b6f6',
+                        is_online: true,
+                        last_seen: new Date().toISOString()
+                    }])
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    console.error('User in Supabase anlegen fehlgeschlagen:', insertError);
+                    return;
+                }
+
+                currentProfile = newUser;
+                currentUser.supabase_id = newUser.id;
+                localStorage.setItem('neigra_current_user', JSON.stringify(currentUser));
+            } else {
+                currentProfile = data;
+                currentUser.supabase_id = data.id;
+                localStorage.setItem('neigra_current_user', JSON.stringify(currentUser));
+            }
+
+            updateDashboardUI();
+            return currentProfile;
+        }
+
+        function updateDashboardUI() {
+            if (!currentProfile) return;
+            document.getElementById('dash-name').textContent = currentProfile.display_name || currentProfile.username;
+            document.getElementById('dash-username').textContent = '@' + currentProfile.username;
+            document.getElementById('dash-color-dot').style.background = currentProfile.preferred_color || '#29b6f6';
+        }
+
+        // ================================================================
+        // 6. PRESENCE (Online-Status) – OFFIZIELLE SUPABASE METHODE
+        // ================================================================
+
+        async function setupPresence() {
+            if (!currentUser || !currentProfile) return;
+
+            // https://supabase.com/docs/guides/realtime/presence
+            presenceChannel = supabase.channel('online-users', {
+                config: {
+                    presence: {
+                        key: currentProfile.id
+                    }
+                }
+            });
+
+            presenceChannel.on('presence', { event: 'sync' }, () => {
+                const state = presenceChannel.presenceState();
+                onlineUsers = {};
+                for (const [key, value] of Object.entries(state)) {
+                    if (value.length > 0) {
+                        onlineUsers[key] = value[0];
+                    }
+                }
+                // Freundesliste neu laden, um Online-Status zu aktualisieren
+                loadFriends();
+            });
+
+            presenceChannel.subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    await presenceChannel.track({
+                        user_id: currentProfile.id,
+                        username: currentProfile.username,
+                        display_name: currentProfile.display_name || currentProfile.username
+                    });
+                }
+            });
+        }
+
+        // ================================================================
+        // 7. FREUNDE (aus Supabase)
+        // ================================================================
+
+        async function loadFriends() {
+            if (!currentUser || !currentProfile) return;
+
+            const userId = currentProfile.id;
+
+            const { data, error } = await supabase
+                .from('friends')
+                .select(`
+                    *,
+                    friend:friend_id (id, username, display_name, preferred_color),
+                    user:user_id (id, username, display_name, preferred_color)
+                `)
+                .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
+                .eq('status', 'accepted');
+
+            if (error) {
+                console.error('Freunde laden fehlgeschlagen:', error);
+                return;
+            }
+
+            const list = document.getElementById('friend-list');
+            document.getElementById('friend-count').textContent = data.length;
+
+            if (data.length === 0) {
+                list.innerHTML = '<div class="empty-state">Noch keine Freunde. Suche nach anderen Spielern!</div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            data.forEach(f => {
+                const isFriend = f.friend_id === userId ? f.user : f.friend;
+                const isOnline = onlineUsers[isFriend.id] ? true : false;
+
+                const div = document.createElement('div');
+                div.className = 'friend-item';
+                div.innerHTML = `
+                    <div class="dot" style="background:${isFriend.preferred_color || '#29b6f6'}"></div>
+                    <span class="name">${isFriend.display_name || isFriend.username}</span>
+                    <span class="status ${isOnline ? 'online' : 'offline'}">${isOnline ? '● Online' : '○ Offline'}</span>
+                    <button class="action-btn challenge" data-friend-id="${isFriend.id}">⚔️</button>
+                `;
+                list.appendChild(div);
+
+                // Challenge-Button Event
+                const challengeBtn = div.querySelector('.challenge');
+                challengeBtn.addEventListener('click', () => {
+                    challengeFriend(isFriend.id);
+                });
+            });
+
+            loadRequests();
+        }
+
+        async function loadRequests() {
+            if (!currentUser || !currentProfile) return;
+
+            const { data, error } = await supabase
+                .from('friends')
+                .select(`
+                    *,
+                    user:user_id (id, username, display_name, preferred_color)
+                `)
+                .eq('friend_id', currentProfile.id)
+                .eq('status', 'pending');
+
+            if (error) {
+                console.error('Anfragen laden fehlgeschlagen:', error);
+                return;
+            }
+
+            const list = document.getElementById('request-list');
+            document.getElementById('request-count').textContent = data.length;
+
+            if (data.length === 0) {
+                list.innerHTML = '<div class="empty-state">Keine ausstehenden Anfragen</div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            data.forEach(req => {
+                const div = document.createElement('div');
+                div.className = 'friend-item';
+                div.innerHTML = `
+                    <div class="dot" style="background:${req.user.preferred_color || '#29b6f6'}"></div>
+                    <span class="name">${req.user.display_name || req.user.username}</span>
+                    <button class="action-btn accept" data-request-id="${req.id}">✔</button>
+                    <button class="action-btn decline" data-request-id="${req.id}">✖</button>
+                `;
+                list.appendChild(div);
+
+                const acceptBtn = div.querySelector('.accept');
+                const declineBtn = div.querySelector('.decline');
+
+                acceptBtn.addEventListener('click', () => {
+                    acceptRequest(req.id);
+                });
+
+                declineBtn.addEventListener('click', () => {
+                    declineRequest(req.id);
+                });
+            });
+        }
+
+        // ================================================================
+        // 8. FREUNDE AKTIONEN
+        // ================================================================
+
+        async function searchFriends() {
+            const query = document.getElementById('friend-search').value.trim();
+            if (!query || query.length < 2) {
+                showToast('Bitte mindestens 2 Zeichen eingeben.', 'error');
+                return;
+            }
+
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, username, display_name, preferred_color')
+                .ilike('username', `%${query}%`)
+                .neq('id', currentProfile.id)
+                .limit(10);
+
+            setLoading(false);
+
+            if (error) {
+                showToast('Fehler bei der Suche.', 'error');
+                return;
+            }
+
+            const container = document.getElementById('search-results');
+            if (data.length === 0) {
+                container.innerHTML = '<div class="empty-state">Keine Benutzer gefunden.</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            data.forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'friend-item';
+                div.innerHTML = `
+                    <div class="dot" style="background:${user.preferred_color || '#29b6f6'}"></div>
+                    <span class="name">${user.display_name || user.username}</span>
+                    <button class="action-btn" data-user-id="${user.id}">+ Anfrage</button>
+                `;
+                container.appendChild(div);
+
+                const btn = div.querySelector('.action-btn');
+                btn.addEventListener('click', () => {
+                    sendRequest(user.id);
+                });
+            });
+        }
+
+        async function sendRequest(userId) {
+            if (!currentUser || !currentProfile) return;
+
+            const { error } = await supabase
+                .from('friends')
+                .insert([{
+                    user_id: currentProfile.id,
+                    friend_id: userId,
+                    status: 'pending'
+                }]);
+
+            if (error) {
+                showToast('Fehler: ' + error.message, 'error');
+            } else {
+                showToast('✅ Freundesanfrage gesendet!', 'success');
+                document.getElementById('search-results').innerHTML = '';
+                document.getElementById('friend-search').value = '';
+            }
+        }
+
+        async function acceptRequest(requestId) {
+            const { error } = await supabase
+                .from('friends')
+                .update({ status: 'accepted' })
+                .eq('id', requestId);
+
+            if (error) {
+                showToast('Fehler: ' + error.message, 'error');
+            } else {
+                showToast('✅ Freundschaft angenommen!', 'success');
+                loadFriends();
+            }
+        }
+
+        async function declineRequest(requestId) {
+            const { error } = await supabase
+                .from('friends')
+                .delete()
+                .eq('id', requestId);
+
+            if (error) {
+                showToast('Fehler: ' + error.message, 'error');
+            } else {
+                showToast('Anfrage abgelehnt.', 'info');
+                loadFriends();
+            }
+        }
+
+        // ================================================================
+        // 9. CHALLENGE (Herausforderung)
+        // ================================================================
+
+        async function challengeFriend(friendId) {
+            if (!currentUser || !currentProfile) return;
+
+            // Prüfen ob bereits eine Challenge existiert
+            const { data: existing, error: checkError } = await supabase
+                .from('challenges')
+                .select('*')
+                .or(`challenger_id.eq.${currentProfile.id},opponent_id.eq.${currentProfile.id}`)
+                .eq('status', 'pending')
+                .maybeSingle();
+
+            if (existing) {
+                showToast('Du hast bereits eine ausstehende Herausforderung.', 'error');
+                return;
+            }
+
+            const { error } = await supabase
+                .from('challenges')
+                .insert([{
+                    challenger_id: currentProfile.id,
+                    opponent_id: friendId,
+                    status: 'pending',
+                    expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString()
+                }]);
+
+            if (error) {
+                showToast('Fehler: ' + error.message, 'error');
+            } else {
+                showToast('⚔️ Herausforderung gesendet!', 'success');
+                // Challenge in Supabase Realtime abonnieren
+                listenForChallenges();
+            }
+        }
+
+        // ================================================================
+        // 10. CHALLENGES REALTIME ABONNIEREN
+        // ================================================================
+
+        let challengeSubscription = null;
+
+        function listenForChallenges() {
+            if (!currentUser || !currentProfile) return;
+
+            if (challengeSubscription) {
+                challengeSubscription.unsubscribe();
+            }
+
+            // https://supabase.com/docs/guides/realtime/postgres-changes
+            challengeSubscription = supabase
+                .channel('challenges')
+                .on(
+                    'postgres_changes', {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'challenges',
+                        filter: `opponent_id=eq.${currentProfile.id}`
+                    },
+                    (payload) => {
+                        const challenge = payload.new;
+                        if (challenge.status === 'pending') {
+                            showToast(`⚔️ ${challenge.challenger_id} fordert dich heraus!`, 'info');
+                            // Auto-accept? Oder wir lassen den User manuell annehmen
+                            // Für jetzt: Einfach Toast
+                        }
+                    }
+                )
+                .subscribe();
+        }
+
+        // ================================================================
+        // 11. START GAME & LOGOUT
+        // ================================================================
+
+        function startGame() {
+            window.location.href = 'game.html';
+        }
+
+        function logout() {
+            // Presence aufräumen
+            if (presenceChannel) {
+                presenceChannel.unsubscribe();
+            }
+            if (challengeSubscription) {
+                challengeSubscription.unsubscribe();
+            }
+
+            clearCurrentUser();
+            showToast('Abgemeldet. Bis bald!', 'info');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 500);
+        }
+
+        // ================================================================
+        // 12. INIT
+        // ================================================================
+
+        async function initDashboard() {
+            const user = getCurrentUser();
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentUser = user;
+            await loadProfile();
+
+            // Presence starten (nachdem Profil geladen)
+            await setupPresence();
+
+            // Freunde laden
+            await loadFriends();
+
+            // Challenges abhören
+            listenForChallenges();
+
+            console.log('🚀 Dashboard geladen für:', currentUser?.username);
+        }
+
+        // ================================================================
+        // 13. EVENT BINDING
+        // ================================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Buttons mit addEventListener
+            document.getElementById('search-btn').addEventListener('click', searchFriends);
+            document.getElementById('start-game-btn').addEventListener('click', startGame);
+            document.getElementById('logout-btn').addEventListener('click', logout);
+
+            // Enter-Taste für Suche
+            document.getElementById('friend-search').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') searchFriends();
+            });
+
+            initDashboard();
+        });
+
+        console.log('🚀 Neigra v2.3 – Dashboard (Freunde + Online-Status)');
+    </script>
+
+</body>
+</html>
